@@ -68,7 +68,16 @@ document.getElementById("handCanvas").addEventListener("click", function(e) {
 			cardArray.splice(cardArray.indexOf(cardSelected), 1);
 			cardSelected = null;
 			document.getElementById("discardSelected").style.display = "none";
-			//!------------------------------------AUGMENT SCORE HERE
+			
+			for(var i = 0; i < idsAndScore.length; i++) {
+				if(idsAndScore[i][2] == socketId) {
+					idsAndScore[i][1] = pointCards.length;
+					break;
+				}
+			}
+			socket.emit('updateScore', idsAndScore, roomToJoin);
+			checkForWinner(idsAndScore)
+			
 			drawOnCanvas(cardArray, handCanvas);
 			updateTable(idsAndScore);
 		//if card clicked is not associated with selected card, deselect the first card
@@ -162,6 +171,14 @@ document.getElementById("tableCanvas").addEventListener("click", function(e) {
 			drawOnCanvas(cardArray, handCanvas);
 			window.alert("Card not associated with this group");
 		}
+	} else if (isTurn) { // if not clicking on a card, and is still client's turn, 
+				//check if the user clicked on a name instead
+		var name = getTableClickedName.apply(null, xyPair);
+		//if the name is valid, ask the server for their pointCards (sends id to server)
+		if(name != null) {
+			console.log(name);
+			socket.emit('requestPointCards', name[2]);
+		}
 	}
 });
 	
@@ -173,6 +190,7 @@ document.getElementById("turn").addEventListener("click", function() {
 	socket.emit('passTurn', roomToJoin, null);
 	document.getElementById("turn").style.display = "none";
 	document.getElementById("discardSelected").style.display = "none";
+	cardSelected = null;
 	isTurn = false;
 	canChooseCard = false;
 });
@@ -188,6 +206,7 @@ document.getElementById("discardSelected").addEventListener("click", function() 
 	}
 	document.getElementById("discardSelected").style.display = "none";
 	document.getElementById("turn").style.display = "none";
+	cardSelected = null;
 	isTurn = false;
 	canChooseCard = false;
 });

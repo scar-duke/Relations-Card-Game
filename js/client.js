@@ -168,7 +168,16 @@ function getTableClickedCard(x, y) {
 }
 
 function getTableClickedName(x, y) {
+	let firstNum = 40 - tableFontSize;
+	let spacing = tableFontSize - 15;
 	
+	for(var i = 0; i < idsAndScore.length; i++) {
+		var lowerBound = firstNum + (tableFontSize*i) + (spacing*i);
+		var upperBound = firstNum + (tableFontSize*(i+1)) + (spacing*i);
+		if(x > 20 & y >= lowerBound & y <= upperBound) {
+			return idsAndScore[i];
+		}
+	}
 }
 
 function updateTableUsers(userIds) {

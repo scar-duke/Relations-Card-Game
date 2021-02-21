@@ -139,6 +139,7 @@ socket.on('returnToMenu', function() {
 	
 	//clear local variables and hide stuff
 	cardArray = [];
+	pointCards = [];
 	idsAndScore = [];
 	isTurn = false
 	canChooseCard = false;
@@ -191,6 +192,7 @@ socket.on('endGame', function(idsAndScore, winner) {
 	
 	document.getElementById("handHeader").style.display = "none";
 	document.getElementById("handCanvas").style.visibility = "hidden";
+	document.getElementById("turn").style.display = "none";
 	document.getElementById("quitButton").style.display = "block";
 	drawWinner(idsAndScore, winner);
 });

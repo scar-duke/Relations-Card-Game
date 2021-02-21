@@ -63,7 +63,7 @@ fs.createReadStream('cardFiles/deck.csv')
 	  columnNum /= rowNum;
 	  fs.close(0, (err) => { if(err) {console.error('Failed to close file', err);} });
 	  var relationNum = 0;
-	  fs.createReadStream('cardFiles/deck.csv')
+	  fs.createReadStream('cardFiles/smallDeck.csv')
 		.pipe(csv({headers:false}))
 		.on('data', (data) => {
 			for(var i = 0; i < columnNum; i++) {
@@ -238,6 +238,17 @@ io.on('connection', (socket) => {
 			socket.emit('requestedCard', cards);
 			
 			//console.log("Gave them a Card");
+		});
+		
+		// when a client wants to see another person's cards, grab them
+		socket.on('requestPointCards', (socketId) => {
+			
+		});
+		
+		// update the score for all sockets when players make moves
+		socket.on('updateScore', (idsAScore, roomNum) => {
+			idsAndScore[roomNum] = idsAScore;
+			io.sockets.in("room"+roomNum).emit('refreshUsers', idsAndScore[roomNum]);
 		});
 		
 		// When the choosing player sends their winning choice
