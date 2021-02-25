@@ -72,11 +72,11 @@ document.getElementById("handCanvas").addEventListener("click", function(e) {
 			for(var i = 0; i < idsAndScore.length; i++) {
 				if(idsAndScore[i][2] == socketId) {
 					idsAndScore[i][1] = pointCards.length;
+					idsAndScore[i][3] = pointCards.slice(0);
 					break;
 				}
 			}
 			socket.emit('updateScore', idsAndScore, roomToJoin);
-			checkForWinner(idsAndScore)
 			
 			drawOnCanvas(cardArray, handCanvas);
 			updateTable(idsAndScore);
@@ -120,65 +120,95 @@ document.getElementById("handCanvas").addEventListener("click", function(e) {
 // cards do not order correctly when clicking on table second and when clicking two paired cards already on the table
 
 document.getElementById("tableCanvas").addEventListener("click", function(e) {
-	xyPair = getMousePos(document.getElementById("tableCanvas"), e);
-	c = getTableClickedCard.apply(null, xyPair);
-	if(c != undefined & canChooseCard  & cardSelected != null) {
-		if(c.relation == cardSelected.relation) {
-			for(var i = 0; i < cardArray.length; i++) {
-				if(cardArray[i] == cardSelected) {
-					cardArray[i].colour = handCardColour;
-					break;
-				}
-			}
-			
-			var cardPlacement = c.order;
-			var addToI = 0;
-			if(c.order < cardSelected.order) {
-				while(cardPlacement != cardSelected.order) {
-					cardPlacement++;
-					addToI++;
-					if(pointCards[pointCards.indexOf(c)+addToI].relation != cardSelected.relation) {
+	if(!lookingAtOppCards) {
+		xyPair = getMousePos(document.getElementById("tableCanvas"), e);
+		c = getTableClickedCard.apply(null, xyPair);
+		if(c != undefined & canChooseCard  & cardSelected != null) {
+			if(c.relation == cardSelected.relation) {
+				for(var i = 0; i < cardArray.length; i++) {
+					if(cardArray[i] == cardSelected) {
+						cardArray[i].colour = handCardColour;
 						break;
 					}
 				}
-				pointCards.splice(pointCards.indexOf(c)+addToI, 0, cardSelected);
+				
+				insertIndex = 0;
+				for(var i = 0; i < pointCards.length; i++) {
+					if(pointCards[i] == c) {
+						insertIndex = i;
+						break;
+					}
+				}
+				
+				selectedOrder = cardSelected.order;
+				selectedRel = cardSelected.relation;
+				if(selectedOrder < pointCards[insertIndex].order) {
+					while(selectedOrder < pointCards[insertIndex].order) {
+						insertIndex--;
+						if(pointCards[insertIndex] == undefined) {
+							insertIndex++;
+							break;
+						} else if(selectedOrder > pointCards[insertIndex].order) {
+							insertIndex++;
+							break;
+						} else if (pointCards[insertIndex].relation != selectedRel) {
+							insertIndex++;
+							break;
+						}
+					}
+				} else if(selectedOrder > pointCards[insertIndex].order) {
+					while(selectedOrder > pointCards[insertIndex].order) {
+						insertIndex++;
+						if(pointCards[insertIndex] == undefined) {
+							break;
+						} else if(selectedOrder < pointCards[insertIndex].order) {
+							break;
+						} else if (pointCards[insertIndex].relation != selectedRel) {
+							break;
+						}
+					}
+				}
+				
+				pointCards.splice(insertIndex, 0, cardSelected);
+				cardArray.splice(cardArray.indexOf(cardSelected), 1);
+				cardSelected = null;
+				document.getElementById("discardSelected").style.display = "none";
+				
+				for(var i = 0; i < idsAndScore.length; i++) {
+					if(idsAndScore[i][2] == socketId) {
+						idsAndScore[i][1] = pointCards.length;
+						idsAndScore[i][3] = pointCards.slice(0);
+						break;
+					}
+				}
+				socket.emit('updateScore', idsAndScore, roomToJoin);
+				drawOnCanvas(cardArray, handCanvas);
+				updateTable(idsAndScore);
 			} else {
-				while(cardPlacement != cardSelected.order+1) {
-					cardPlacement--;
-					addToI++;
-					if(pointCards[pointCards.indexOf(c)-addToI].relation != cardSelected.relation) {
+				for(var i = 0; i < cardArray.length; i++) {
+					if(cardArray[i] == cardSelected) {
+						cardArray[i].colour = handCardColour;
+						drawOnCanvas(cardArray, handCanvas);
 						break;
 					}
 				}
-				pointCards.splice(pointCards.indexOf(c)-addToI, 0, cardSelected);
+				cardSelected = null;
+				document.getElementById("discardSelected").style.display = "none";
+				drawOnCanvas(cardArray, handCanvas);
+				window.alert("Card not associated with this group");
 			}
-			
-			cardArray.splice(cardArray.indexOf(cardSelected), 1);
-			cardSelected = null;
-			document.getElementById("discardSelected").style.display = "none";
-			drawOnCanvas(cardArray, handCanvas);
-			updateTable(idsAndScore);
-		} else {
-			for(var i = 0; i < cardArray.length; i++) {
-				if(cardArray[i] == cardSelected) {
-					cardArray[i].colour = handCardColour;
-					drawOnCanvas(cardArray, handCanvas);
-					break;
-				}
+		} else if (isTurn) { // if not clicking on a card, and is still client's turn, 
+					//check if the user clicked on a name instead
+			var name = getTableClickedName.apply(null, xyPair);
+			//if the name is valid, ask the server for their pointCards (sends id to server)
+			if(name != null & name[0] != playerName) {
+				drawOppCards(idsAndScore, name);
 			}
-			cardSelected = null;
-			document.getElementById("discardSelected").style.display = "none";
-			drawOnCanvas(cardArray, handCanvas);
-			window.alert("Card not associated with this group");
 		}
-	} else if (isTurn) { // if not clicking on a card, and is still client's turn, 
-				//check if the user clicked on a name instead
-		var name = getTableClickedName.apply(null, xyPair);
-		//if the name is valid, ask the server for their pointCards (sends id to server)
-		if(name != null) {
-			console.log(name);
-			socket.emit('requestPointCards', name[2]);
-		}
+		//if you were looking at an opponent's cards, return the table to your cards after a click
+	} else {
+		updateTable(idsAndScore);
+		lookingAtOppCards = false;
 	}
 });
 	

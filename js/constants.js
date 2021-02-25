@@ -14,7 +14,7 @@ var cardWidth = 110;
 var cardHeight = 150;
 var spaceBetweenCards = 20;
 
-var numOfCardsInHand = 5;
+var numOfCardsInHand = 10;
 
 var profName = "Dr. Cessna";
 
@@ -23,4 +23,4 @@ var profName = "Dr. Cessna";
 // of x rounds (one round = everyone has gone once)?
 var winByRounds = false;
 var numOfRounds = 1;
-var scoreToWin = 5;
+var scoreToWin = 20;

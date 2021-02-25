@@ -49,7 +49,7 @@ for(var i = 0; i < maxNumOfRooms; i++) {
 // ================================================================Parse CSV files
 var columnNum = 0;
 var rowNum = 0;
-fs.createReadStream('cardFiles/deck.csv')
+fs.createReadStream('cardFiles/longDeck.csv')
   .pipe(csv({headers:false}))
   .on('data', (data) => {
 	  rowNum++;
@@ -63,7 +63,7 @@ fs.createReadStream('cardFiles/deck.csv')
 	  columnNum /= rowNum;
 	  fs.close(0, (err) => { if(err) {console.error('Failed to close file', err);} });
 	  var relationNum = 0;
-	  fs.createReadStream('cardFiles/smallDeck.csv')
+	  fs.createReadStream('cardFiles/longDeck.csv')
 		.pipe(csv({headers:false}))
 		.on('data', (data) => {
 			for(var i = 0; i < columnNum; i++) {
@@ -187,7 +187,8 @@ io.on('connection', (socket) => {
 				socket.emit('gameInProgress', false);
 				users[roomToJoin].push(socket);
 				usersInRooms[roomToJoin].push(socket.id);
-				idsAndScore[roomToJoin].push([name, 0, socket.id]);
+				// pass in user's name, startin score, socketId, and an empty points array
+				idsAndScore[roomToJoin].push([name, 0, socket.id, []]);
 				playersReady[roomToJoin]++;
 				io.sockets.in("room"+roomToJoin).emit('updateTableUsers', idsAndScore[roomToJoin]);
 				if(playersReady[roomToJoin] >= minPlayers & playersReady[roomToJoin] <= maxPlayers) {
@@ -238,11 +239,6 @@ io.on('connection', (socket) => {
 			socket.emit('requestedCard', cards);
 			
 			//console.log("Gave them a Card");
-		});
-		
-		// when a client wants to see another person's cards, grab them
-		socket.on('requestPointCards', (socketId) => {
-			
 		});
 		
 		// update the score for all sockets when players make moves
@@ -298,28 +294,29 @@ io.on('connection', (socket) => {
 				//deal with the discarded card (if there is one) 
 				if(dc != null) {			
 					discardContent[roomNum].push([dc.content,dc.relation,dc.order]);
-					console.log(discardContent[roomNum]);
-					console.log(deckContent[roomNum]);
 				}
 				//change the turn and give the new turn player another card if able
 				//if out of cards but discard pile is enabled, replace the deck and
 				//change the turn. If not enabled, choose a winner
 				if(deckContent[roomNum].length > 0) {
-				//send the turn booleans to the next socket and keep track of the turn changing
-				users[roomNum][(turn[roomNum]+1)%users[roomNum].length].emit('yourTurn');
-				var aCard = (deckContent[roomNum][Math.floor(Math.random() * deckContent[roomNum].length)]);
-				deckContent[roomNum].splice(deckContent[roomNum].indexOf(aCard), 1);
-				aCard = [aCard];
-				users[roomNum][(turn[roomNum]+1)%users[roomNum].length].emit('requestedCard', aCard);
+					//send the turn booleans to the next socket and keep track of the turn changing
+					users[roomNum][(turn[roomNum]+1)%users[roomNum].length].emit('yourTurn');
+					var aCard = (deckContent[roomNum][Math.floor(Math.random() * deckContent[roomNum].length)]);
+					deckContent[roomNum].splice(deckContent[roomNum].indexOf(aCard), 1);
+					aCard = [aCard];
+					users[roomNum][(turn[roomNum]+1)%users[roomNum].length].emit('requestedCard', aCard);
 				
-				turn[roomNum] = currentTurn[roomNum]++ % users[roomNum].length;
-				console.log("next turn triggered");
+					turn[roomNum] = currentTurn[roomNum]++ % users[roomNum].length;
+					if(turn[roomNum] == 0) {
+						io.sockets.in("room"+roomNum).emit('checkWinner', idsAndScore[roomNum]);
+					}
+					console.log("next turn triggered ");
 				} else if(deckContent[roomNum].length <= 0 & useDiscard == true) {
 					deckContent[roomNum] = discardContent[roomNum].slice(0);
 					discardContent[roomNum] = [];
 					//if the discard pile is empty, end the game
 					if(deckContent[roomNum].length <= 0) {
-						io.sockets.in("room"+roomNum).emit('chooseWinner', idsAndScore);
+						io.sockets.in("room"+roomNum).emit('chooseWinner', idsAndScore[roomNum]);
 					} else {
 						users[roomNum][(turn[roomNum]+1)%users[roomNum].length].emit('yourTurn');
 						var aCard = (deckContent[roomNum][Math.floor(Math.random() * deckContent[roomNum].length)]);
@@ -331,7 +328,7 @@ io.on('connection', (socket) => {
 						console.log("next turn triggered");
 					}
 				} else if(deckContent[roomNum].length <= 0 & useDiscard == false) {
-					io.sockets.in("room"+roomNum).emit('chooseWinner', idsAndScore);
+					io.sockets.in("room"+roomNum).emit('chooseWinner', idsAndScore[roomNum]);
 				}
 			}
 		});
