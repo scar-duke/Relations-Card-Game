@@ -2,7 +2,7 @@
 	display: none;
 }
 
-#nameInUseText, #sorryText, #sorryProgressText, #sorryGameInterruptText {
+#nameInUseText, #sorryText, #sorryProgressText, #sorryGameInterruptText, #forceEndText {
 	color: red;
 	display: none;
 }

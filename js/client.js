@@ -348,8 +348,6 @@ function drawOppCards(userIds, opponent) {
 	
 	//draw the opponent's point cards
 	for(var i = 0; i < opponent[3].length; i++) {
-		console.log(opponent[3]);
-		console.log(opponent[3][i]);
 		var card = new Card(opponent[3][i].content, opponent[3][i].relation, opponent[3][i].order);
 		card.drawCard(x, y, tableCanvas);
 		if(i != opponent[3].length-1) {

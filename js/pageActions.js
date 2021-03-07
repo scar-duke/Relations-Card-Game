@@ -39,25 +39,49 @@ document.getElementById("handCanvas").addEventListener("click", function(e) {
 			}
 			// first check if the pair is connected to other cards on the table
 			var onTable = false;
+			var insertIndex;
 			for(var i = 0; i < pointCards.length; i++) {
-				if(pointCards[i].relation == cardSelected.relation &
-				(pointCards[i].order+1 == cardSelected.order | pointCards[i].order+1 == c.order)) {
+				if(pointCards[i].relation == cardSelected.relation) {
 					onTable = true;
-					
-					//reorder here; keep in mind that related cards may be next to each other or may be at opposite ends
-					
-					
-					if(c.order < cardSelected.order) {
-						pointCards.splice(i, 0, c);
-						pointCards.splice(i+1, 0, cardSelected);
-					} else {
-						pointCards.splice(i, 0, cardSelected);
-						pointCards.splice(i+1, 0, c);
-					}
+					insertIndex = i;
 					break;
 				}
 			}	
-			if(!onTable & c.order < cardSelected.order) {
+			if(onTable) {
+				arr = [c, cardSelected];
+				//for each card selected in the handCanvas, place it
+				for(var i = 0; i < arr.length; i++) {
+					selectedOrder = arr[i].order;
+					selectedRel = arr[i].relation;
+					if(selectedOrder < pointCards[insertIndex].order) {
+						while(selectedOrder < pointCards[insertIndex].order) {
+							insertIndex--;
+							if(pointCards[insertIndex] == undefined) {
+								insertIndex++;
+								break;
+							} else if(selectedOrder > pointCards[insertIndex].order) {
+								insertIndex++;
+								break;
+							} else if (pointCards[insertIndex].relation != selectedRel) {
+								insertIndex++;
+								break;
+							}
+						}
+					} else if(selectedOrder > pointCards[insertIndex].order) {
+						while(selectedOrder > pointCards[insertIndex].order) {
+							insertIndex++;
+							if(pointCards[insertIndex] == undefined) {
+								break;
+							} else if(selectedOrder < pointCards[insertIndex].order) {
+								break;
+							} else if (pointCards[insertIndex].relation != selectedRel) {
+								break;
+							}
+						}
+					}
+					pointCards.splice(insertIndex, 0, arr[i]);
+				}
+			} else if(!onTable & c.order < cardSelected.order) {
 				pointCards.push(c);
 				pointCards.push(cardSelected);
 			} else if (!onTable) {
@@ -117,11 +141,9 @@ document.getElementById("handCanvas").addEventListener("click", function(e) {
 	}
 });
 
-// cards do not order correctly when clicking on table second and when clicking two paired cards already on the table
-
 document.getElementById("tableCanvas").addEventListener("click", function(e) {
+	xyPair = getMousePos(document.getElementById("tableCanvas"), e);
 	if(!lookingAtOppCards) {
-		xyPair = getMousePos(document.getElementById("tableCanvas"), e);
 		c = getTableClickedCard.apply(null, xyPair);
 		if(c != undefined & canChooseCard  & cardSelected != null) {
 			if(c.relation == cardSelected.relation) {
@@ -198,17 +220,27 @@ document.getElementById("tableCanvas").addEventListener("click", function(e) {
 				window.alert("Card not associated with this group");
 			}
 		} else if (isTurn) { // if not clicking on a card, and is still client's turn, 
-					//check if the user clicked on a name instead
+								//check if the user clicked on a name instead
 			var name = getTableClickedName.apply(null, xyPair);
 			//if the name is valid, ask the server for their pointCards (sends id to server)
 			if(name != null & name[0] != playerName) {
 				drawOppCards(idsAndScore, name);
 			}
 		}
-		//if you were looking at an opponent's cards, return the table to your cards after a click
+		//if you were looking at an opponent's cards, check if clicked on another opponent's cards
 	} else {
-		updateTable(idsAndScore);
-		lookingAtOppCards = false;
+		var opp = getTableClickedName.apply(null, xyPair);
+		console.log(opp);
+		//if the name is valid and not yours, draw the opponent cards
+		if(opp != undefined) {
+			if(opp[0] != playerName) {
+				drawOppCards(idsAndScore, opp);
+			}
+		} else { //if name is not valid (clicked on something that wasn't a name or was your name),
+				//show your cards again
+			updateTable(idsAndScore);
+			lookingAtOppCards = false;
+		}
 	}
 });
 	

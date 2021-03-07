@@ -170,19 +170,20 @@ socket.on('chooseWinner', function(idsAndScore) {
 });
 
 
+// used to forcefully end the game for a non-player reason (e.g. not enough cards to go around to begin)
+socket.on('forceEnd', function() {
+	document.getElementById("goButton").style.display = "none";
+	document.getElementById("waitText").style.display = "none";
+	document.getElementById("forceEndText").style.display = "block";
+});
+
+
 // Misc. / stuff that'll need changed between CAH and other rules
 
 //used to update table users on ui from anywhere (only used for relations right now)
 socket.on('refreshUsers', function(idsAScore) {
 	idsAndScore = idsAScore
 	updateTable(idsAndScore);
-});
-
-//when a winning card is chosen, clear the table and update the score
-//then, check to see if someone won with the new score
-socket.on('clearTable', function(idsAndScore) {
-	checkForWinner(idsAndScore);
-	canChooseCard = true;
 });
 
 socket.on('endGame', function(idsAndScore, winner) {
@@ -254,7 +255,6 @@ function checkForWinner(idsAndScore) {
 	} else { // else, game is set to check scores for a possible winner
 		var winner = null;
 		var winningScore = null;
-		console.log("check for winner");
 		for(var i = 0; i < idsAndScore.length; i++) {
 			if(idsAndScore[i][1] >= scoreToWin) {
 				if(winner == null | winningScore < idsAndScore[i][1]) {
