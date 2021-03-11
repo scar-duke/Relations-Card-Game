@@ -227,23 +227,24 @@ function checkForWinner(idsAndScore) {
 	var isWinner = false;
 	var tieArr = [];
 	if(winByRounds) { // if game is set to win after x rounds
-		if(round/idsAndScore.length == numOfRounds) {
-			// see who has the highest score
-			var winner = idsAndScore[0][2];
-			var winningScore = idsAndScore[0][1];
-			for(var i = 1; i < idsAndScore.length; i++) {
-				if(winner == null | winningScore < idsAndScore[i][1]) {
-					winner = idsAndScore[i][2];
-					winningScore = idsAndScore[i][1];
-					tieArr = [];
-				} else if(winningScore == idsAndScore[i][1]) {
-					tieArr.push(idsAndScore[i][2]);
+		if(round == numOfRounds) {
+			var winner = null;
+			var winningScore = 0;
+			for(var i = 0; i < idsAndScore.length; i++) {
+				if(idsAndScore[i][1] >= winningScore) {
+					if(winner == null | winningScore < idsAndScore[i][1]) {
+						winner = idsAndScore[i][2];
+						winningScore = idsAndScore[i][1];
+						tieArr = [];
+					} else if(winningScore == idsAndScore[i][1]) {
+						tieArr.push(idsAndScore[i][2]);
+					}
 				}
 			}
+			
 			isWinner = true;
-			// only call the winning code once from the server
 			if(socketId == winner) {
-				if(tieArr != null) {
+				if(tieArr != []) {
 					tieArr.push(winner);
 					socket.emit('playerHasWon', tieArr, roomToJoin);
 				} else {
@@ -252,6 +253,7 @@ function checkForWinner(idsAndScore) {
 			}
 		}
 		round++;
+		console.log(round);
 	} else { // else, game is set to check scores for a possible winner
 		var winner = null;
 		var winningScore = null;

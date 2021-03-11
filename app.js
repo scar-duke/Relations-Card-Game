@@ -225,24 +225,23 @@ io.on('connection', (socket) => {
 	
 		// When a client wants cards for their hand, send them the content and relationNum
 		socket.on('requestedCard', (numOfCards, roomNum) => {
-			//if the game hasn't started yet but we're out of cards, prevent the game from starting
-			if(gameInProgress[roomNum] == false && deckContent[roomNum].length <= 0) {
-				io.sockets.in("room"+roomNum).emit('forceEnd');
-			} else {
 				// if all cards have been used, end the game
 				if(deckContent[roomNum].length <= 0) {
 					io.sockets.in("room"+roomNum).emit('chooseWinner', idsAndScore[roomNum]);
 				}
 				var cards = [];
 				for(var i = 0; i < numOfCards; i++) {
-					if(deckContent[roomNum].length <= 0)
+					//if the game hasn't started yet but we're out of cards, prevent the game from starting
+					if(gameInProgress[roomNum] == false && deckContent[roomNum].length <= 0) {
+						io.sockets.in("room"+roomNum).emit('forceEnd');
+					}
 					var aCard = (deckContent[roomNum][Math.floor(Math.random() * deckContent[roomNum].length)]);
 					deckContent[roomNum].splice(deckContent[roomNum].indexOf(aCard), 1);
 					cards.push(aCard);
+					console.log(aCard);
 					//console.log(socket.id + " wants a card");
 				}
 				socket.emit('requestedCard', cards);
-			}
 			//console.log("Gave them a Card");
 		});
 		
