@@ -86,7 +86,10 @@ fs.createReadStream('cardFiles/longDeck.csv')
 
 // =================Get index file and other required external javascript/css function files
 app.get('/', (req, res) => {
-	res.sendFile(__dirname + '/index.html');
+	res.sendFile(__dirname + '/relationsIndex.html');
+});
+app.get('/js/relations.js', (req, res) => {
+	res.sendFile(__dirname + '/js/relations.js');
 });
 app.get('/js/client.js', (req, res) => {
 	res.sendFile(__dirname + '/js/client.js');
@@ -159,16 +162,6 @@ io.on('connection', (socket) => {
 			console.log(socket.id + ' user disconnected');
 		});
 		
-		socket.on('checkName', (name, roomToJoin) => {
-			var unique = true;
-			for(var i = 0; i < idsAndScore[roomToJoin].length; i++) {
-				if(name == idsAndScore[roomToJoin][i][0]) {
-					unique = false;
-				}
-			}
-			socket.emit('nameUnique', unique);
-		});
-		
 		socket.on('playerReady', (name, roomToJoin) => {
 			console.log(name + " wants to join room " + roomToJoin);
 			var unique = true;
@@ -238,7 +231,6 @@ io.on('connection', (socket) => {
 					var aCard = (deckContent[roomNum][Math.floor(Math.random() * deckContent[roomNum].length)]);
 					deckContent[roomNum].splice(deckContent[roomNum].indexOf(aCard), 1);
 					cards.push(aCard);
-					console.log(aCard);
 					//console.log(socket.id + " wants a card");
 				}
 				socket.emit('requestedCard', cards);

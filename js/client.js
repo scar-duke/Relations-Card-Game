@@ -1,13 +1,9 @@
 var cardArray = [];
-var pointCards = [];
 var playerName;
 var socketId = "";
 var isTurn = false;
 var canChooseCard = false;
-var lookingAtOppCards = false;
 var round = 1;
-var cardSelected = null;
-var idsAndScore;
 
 window.onload = function () {
 	handCanvas.start();
@@ -159,29 +155,6 @@ function getClickedCard(x, y) {
 	}
 }
 
-function getTableClickedCard(x, y) {
-	for(var i = 0; i < pointCards.length; i++) {
-		if(x > pointCards[i].x & x < pointCards[i].x + pointCards[i].width) {
-			if(y > pointCards[i].y & y < pointCards[i].y + pointCards[i].height) {
-				return pointCards[i];
-			}
-		}
-	}
-}
-
-function getTableClickedName(x, y) {
-	let firstNum = 40 - tableFontSize;
-	let spacing = tableFontSize - 15;
-	
-	for(var i = 0; i < idsAndScore.length; i++) {
-		var lowerBound = firstNum + (tableFontSize*i) + (spacing*i);
-		var upperBound = firstNum + (tableFontSize*(i+1)) + (spacing*i);
-		if(x > 20 & y >= lowerBound & y <= upperBound) {
-			return idsAndScore[i];
-		}
-	}
-}
-
 function updateTableUsers(userIds) {
 	var ctx = tableCanvas.context;
 	ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -199,173 +172,6 @@ function updateTableUsers(userIds) {
 		y += changeUserY;
 	}
 }
-
-function updateTable(userIds) {
-	var ctx = tableCanvas.context;
-	ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-	x = 20;
-	y = 40;
-	var changeY = cardHeight + spaceBetweenCards;
-	var changeUserY = tableFontSize*2 - 15;
-	
-	//augment size of canvas before drawing, if needed
-	ctx.canvas.height = 350;
-	for(var i = 0; i < userIds.length; i++) {
-		y += changeUserY;
-		if(y >= ctx.canvas.height) {
-			ctx.canvas.height += changeUserY;
-		}
-	}
-	for(var i = 0; i < pointCards.length; i++) {
-		if(i != pointCards.length-1) {
-			if(pointCards[i].relation == pointCards[i+1].relation) {
-				x += cardWidth + spaceBetweenCards/2;
-			} else {
-				x += cardWidth + spaceBetweenCards*2;
-			}
-		}
-		
-		//if card width added to x position would put it off the canvas, move down
-		if(x + cardWidth + spaceBetweenCards*2 > ctx.canvas.width) {
-			x = 20;
-			y += changeY;
-		}
-		//if card height added to the y position would put it off the canvas, make it bigger
-		if(y + cardHeight > ctx.canvas.height) {
-			ctx.canvas.height += cardHeight + spaceBetweenCards;
-		}
-	}
-	
-	ctx.canvas.height += tableFontSize*2;
-	
-	x = 20;
-	y = 40;
-	
-	//draw all of the users and their scores
-	for(var i = 0; i < userIds.length; i++) {
-		ctx.fillStyle = fontColour;
-		ctx.font = tableFontSize + "px " + fontType;
-		ctx.textAlign = "left";
-		if(userIds[i][2] == socketId) {
-			ctx.font = "bold " + tableFontSize + "px " + fontType;
-		}
-		ctx.fillText(userIds[i][0] + " - " + userIds[i][1], x, y);
-		y += changeUserY;
-		if(y >= ctx.canvas.height) {
-			ctx.canvas.height += changeUserY;
-		}
-	}
-	
-	y += tableFontSize;
-	ctx.font = tableFontSize + "px " + fontType;
-	ctx.fillText("Your Point Cards:", x, y);
-	y += tableFontSize;
-	
-	//draw the client's point cards
-	for(var i = 0; i < pointCards.length; i++) {
-		pointCards[i].drawCard(x, y, tableCanvas);
-		if(i != pointCards.length-1) {
-			if(pointCards[i].relation == pointCards[i+1].relation) {
-				x += cardWidth + spaceBetweenCards/2;
-			} else {
-				x += cardWidth + spaceBetweenCards*2;
-			}
-		}
-		
-		
-		// move entire group of related cards, not just the one that hangs off the edge
-		
-		
-		//if card width added to x position would put it off the canvas, move down
-		if(x + cardWidth + spaceBetweenCards*2 > ctx.canvas.width) {
-			x = 20;
-			y += changeY;
-		}
-	}
-}
-
-function drawOppCards(userIds, opponent) {
-	lookingAtOppCards = true;
-	var ctx = tableCanvas.context;
-	ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-	x = 20;
-	y = 40;
-	var changeY = cardHeight + spaceBetweenCards;
-	var changeUserY = tableFontSize*2 - 15;
-	
-	//augment size of canvas before drawing, if needed
-	ctx.canvas.height = 350;
-	for(var i = 0; i < userIds.length; i++) {
-		y += changeUserY;
-		if(y >= ctx.canvas.height) {
-			ctx.canvas.height += changeUserY;
-		}
-	}
-	for(var i = 0; i < opponent[3].length; i++) {
-		if(i != opponent[3].length-1) {
-			if(opponent[3][i].relation == opponent[3][i+1].relation) {
-				x += cardWidth + spaceBetweenCards/2;
-			} else {
-				x += cardWidth + spaceBetweenCards*2;
-			}
-		}
-		
-		//if card width added to x position would put it off the canvas, move down
-		if(x + cardWidth + spaceBetweenCards*2 > ctx.canvas.width) {
-			x = 20;
-			y += changeY;
-		}
-		//if card height added to the y position would put it off the canvas, make it bigger
-		if(y + cardHeight > ctx.canvas.height) {
-			ctx.canvas.height += cardHeight + spaceBetweenCards;
-		}
-	}
-	
-	ctx.canvas.height += tableFontSize*2;
-	
-	x = 20;
-	y = 40;
-	
-	//draw all of the users and their scores
-	for(var i = 0; i < userIds.length; i++) {
-		ctx.fillStyle = fontColour;
-		ctx.font = tableFontSize + "px " + fontType;
-		ctx.textAlign = "left";
-		if(userIds[i][2] == socketId) {
-			ctx.font = "bold " + tableFontSize + "px " + fontType;
-		}
-		ctx.fillText(userIds[i][0] + " - " + userIds[i][1], x, y);
-		y += changeUserY;
-		if(y >= ctx.canvas.height) {
-			ctx.canvas.height += changeUserY;
-		}
-	}
-	
-	y += tableFontSize;
-	ctx.font = tableFontSize + "px " + fontType;
-	ctx.fillText(opponent[0] + "'s Point Cards:", x, y);
-	y += tableFontSize;
-	
-	//draw the opponent's point cards
-	for(var i = 0; i < opponent[3].length; i++) {
-		var card = new Card(opponent[3][i].content, opponent[3][i].relation, opponent[3][i].order);
-		card.drawCard(x, y, tableCanvas);
-		if(i != opponent[3].length-1) {
-			if(opponent[3][i].relation == opponent[3][i+1].relation) {
-				x += cardWidth + spaceBetweenCards/2;
-			} else {
-				x += cardWidth + spaceBetweenCards*2;
-			}
-		}
-		
-		//if card width added to x position would put it off the canvas, move down
-		if(x + cardWidth + spaceBetweenCards*2 > ctx.canvas.width) {
-			x = 20;
-			y += changeY;
-		}
-	}
-}
-
 
 function drawWinner(idsAndScore, winnerId) {
 	var ctx = tableCanvas.context;
@@ -394,7 +200,7 @@ function drawWinner(idsAndScore, winnerId) {
 	if(winners.length > 1) {
 		txt = "It's a tie between " + winners.join(" and ") + " with a score of " + score + "!";
 	} else {
-		txt = "The winner is: " + winner + ", with a score of " + score + "!";
+		txt = "The winner is: " + winners + ", with a score of " + score + "!";
 	}
 	var ret = "";
 	if(ctx.measureText(txt).width > ctx.canvas.width) {

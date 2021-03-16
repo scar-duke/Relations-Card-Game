@@ -101,56 +101,12 @@ socket.on('hideGoButton', function() {
 	document.getElementById("goButton").style.display = "none";
 });
 
-//==================================================== Functions for game start
-//when all players have designated they are ready, make the UI game-ready
-socket.on('allPlayersReady', function() {
-	document.getElementById("waitText").style.display = "none";
-	document.getElementById("goButton").style.display = "none";
-	document.getElementById("handHeader").style.display = "block";
-	document.getElementById("handCanvas").style.visibility = "visible";
-	document.getElementById("handHeader").innerHTML = playerName + "'s Hand";
-	updateTable(idsAndScore);
-});
-
-socket.on('updateTableUsers', function(idsAndScores) {
-	var room = parseInt(roomToJoin) + 1;
-	document.getElementById("roomTitle").style.display = "block";
-	document.getElementById("roomTitle").innerHTML = "Room " + room;
-	
-	idsAndScore = idsAndScores;
-	updateTableUsers(idsAndScores);
-});
-
 //==================================================== Functions for game end
 //if too many players disconnect from an in-progress game, give an error to refresh
 socket.on('callForRestart', function() {
 	document.getElementById("sorryGameInterruptText").style.display = "block";
 	document.getElementById("handHeader").style.display = "none";
 	document.getElementById("handCanvas").style.visibility = "hidden";
-});
-
-//when a player is done with a game, reset their view to the first screen
-socket.on('returnToMenu', function() {
-	//clear the canvases
-	var ctx = tableCanvas.context;
-	ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-	ctx = handCanvas.context;
-	ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-	
-	//clear local variables and hide stuff
-	cardArray = [];
-	pointCards = [];
-	idsAndScore = [];
-	isTurn = false
-	canChooseCard = false;
-	round = 1;
-	roomToJoin = "";
-	document.getElementById("roomTitle").style.display = "none";
-	document.getElementById("quitButton").style.display = "none";
-	
-	//show the rooms table
-	document.getElementById("chooseRoom").style.display = "block";
-	document.getElementById("roomsTable").style.display = "block";
 });
 
 // used to call forced-winner scenarios (i.e. if we run out of question cards)
@@ -170,53 +126,10 @@ socket.on('chooseWinner', function(idsAndScore) {
 });
 
 
-// used to forcefully end the game for a non-player reason (e.g. not enough cards to go around to begin)
-socket.on('forceEnd', function() {
-	document.getElementById("goButton").style.display = "none";
-	document.getElementById("waitText").style.display = "none";
-	document.getElementById("forceEndText").style.display = "block";
-});
+// Misc.
 
-
-// Misc. / stuff that'll need changed between CAH and other rules
-
-//used to update table users on ui from anywhere (only used for relations right now)
-socket.on('refreshUsers', function(idsAScore) {
-	idsAndScore = idsAScore
-	updateTable(idsAndScore);
-});
-
-socket.on('endGame', function(idsAndScore, winner) {
-	// disable everything else and display the winner, effectively ending the game
-	isTurn = false;
-	canChooseCard = false;
-	
-	document.getElementById("handHeader").style.display = "none";
-	document.getElementById("handCanvas").style.visibility = "hidden";
-	document.getElementById("turn").style.display = "none";
-	document.getElementById("quitButton").style.display = "block";
-	drawWinner(idsAndScore, winner);
-});
-
-// Takes content recieved from the server and adds it to the card hand array
-socket.on('requestedCard', function(contentArray) {
-	for(var i = 0; i < contentArray.length; i++) {
-		curCard = contentArray[i];
-		cardArray.push(new Card(curCard[0], curCard[1], curCard[2]));
-	}
-	drawOnCanvas(cardArray, handCanvas);
-});
 socket.on('sentCardSuccess', function() {
-	socket.emit('requestedCard', roomToJoin);
-});
-
-socket.on('yourTurn', function() {
-	console.log("Your Turn");
-	isTurn = true;
-	canChooseCard = true;
-	document.getElementById("turn").style.display = "inline";
-	document.getElementById("handHeader").style.display = "block";
-	document.getElementById("handCanvas").style.visibility = "visible";
+	socket.emit('requestedCard', 1, roomToJoin);
 });
 
 socket.on('checkWinner', function(idsAndScore) {
@@ -253,7 +166,6 @@ function checkForWinner(idsAndScore) {
 			}
 		}
 		round++;
-		console.log(round);
 	} else { // else, game is set to check scores for a possible winner
 		var winner = null;
 		var winningScore = null;
